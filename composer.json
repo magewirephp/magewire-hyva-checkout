@@ -1,0 +1,22 @@
+{
+  "name": "magewirephp/magewire-hyva-checkout",
+  "description": "Hyvä Checkout compatibility module for Magewire V3",
+  "type": "magento2-module",
+  "require": {
+      "magewirephp/magewire": ">=3.2",
+      "magewirephp/magewire-hyva-theme": "*",
+      "hyva-themes/magento2-hyva-checkout": "*"
+  },
+  "support": {
+      "docs": "https://docs.hyva.io/"
+  },
+  "license": "MIT",
+  "autoload": {
+    "files": [
+      "src/registration.php"
+    ],
+    "psr-4": {
+      "Magewirephp\\MagewireHyvaCheckout\\": "src/"
+    }
+  }
+}

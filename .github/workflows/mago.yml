@@ -1,0 +1,36 @@
+name: 'Mago'
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+
+  mago:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Mago
+        env:
+          MAGO_VERSION: '1.27.1'
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://carthage.software/mago.sh | bash -s -- --no-verify --version="$MAGO_VERSION"
+          mago --version
+
+      - name: Strip external includes from mago.toml
+        run: sed -i '/^includes\s*=/d' mago.toml
+
+      - name: Mago lint
+        run: mago lint --reporting-format=github
+
+      - name: Mago format check
+        run: mago format --check
