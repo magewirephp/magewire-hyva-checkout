@@ -17,26 +17,43 @@ $magewireFragment = $magewireViewModel->utils()->fragment();
 ?>
 <?php $script = $magewireFragment->make()->script()->start() ?>
 <script>
-    document.addEventListener('magewire:init', event => {
-        const _find = Magewire.find.bind(Magewire);
+    <?php /*
+        Replace a BC-enabled component's `$wire` with a single backwards compatibility proxy.
+        Both wire access paths read this exact object — Alpine's `wire` magic (`this.$wire.*`
+        resolves to `component.$wire[prop]`) and `Magewire.find(id)` (which returns
+        `components[id].$wire`) — so all BC wire concerns live in one proxy without nested
+        re-wrapping. Handled members:
 
-        Magewire.find = function(id) {
-            const wire = _find(id);
+        - `sync`: @deprecated v1 `$wire.sync(name, value)` (set + immediate commit) has no v3
+          equivalent and isn't covered by the proxy aliases, so it would fall through to a
+          `callMethod: sync` request and fail with "Method not found: sync". Map it onto the native
+          `$set` (which defaults `live = true`) — the same safe live commit path as
+          `wire:model.live`. Migrate to `$wire.$set(name, value)` in v3-native code.
+        - `__instance`: return a backwards-compatible component proxy instead of the raw component.
+    */ ?>
+    Magewire.hook('component.init', ({ component }) => {
+        if (! ('bc' in component.snapshot.memo) || ! component.snapshot.memo.bc['enabled']) {
+            return;
+        }
 
-            if (! wire) {
-                return wire;
-            }
+        <?php /* Already wrapped — quick return so we never stack a proxy on a proxy. */ ?>
+        if (component.__bcWire) {
+            return;
+        }
 
-            return new Proxy(wire, {
-                get(target, prop, receiver) {
-                    if (prop === '__instance') {
-                        return _magewireMakeComponentBackwardsCompatibleSync(target.__instance);
-                    }
-
-                    return Reflect.get(target, prop, receiver);
+        component.$wire = component.__bcWire = new Proxy(component.$wire, {
+            get(target, prop, receiver) {
+                if (prop === 'sync') {
+                    return (name, value, live = true) => target.$set(name, value, live);
                 }
-            });
-        };
+
+                if (prop === '__instance') {
+                    return _magewireMakeComponentBackwardsCompatibleSync(target.__instance);
+                }
+
+                return Reflect.get(target, prop, receiver);
+            }
+        });
     });
 
     <?php /* @todo Should return `true/false` based on a Magewire system config settings. */ ?>
