@@ -32,10 +32,14 @@ $magewireFragment = $magewireViewModel->utils()->fragment();
         - `__instance`: return a backwards-compatible component proxy instead of the raw component.
     */ ?>
     Magewire.hook('component.init', ({ component }) => {
-        if (! ('bc' in component.snapshot.memo) || ! component.snapshot.memo.bc['enabled']) {
-            return;
-        }
-
+        <?php /*
+            Not gated on memo.bc.enabled: `sync` and `__instance` are universally safe ($set and a
+            pass-through component proxy), and `__instance` was ungated in the original Magewire.find
+            override this replaces. Gating here also misses components whose bc flag isn't resolved in
+            a given render context (e.g. an address form re-rendered via a subsequent Magewire request),
+            which is exactly when $wire.sync() would silently fall through to a "Method not found".
+            This template only loads on checkout, so the wrap stays scoped to checkout components.
+        */ ?>
         <?php /* Already wrapped — quick return so we never stack a proxy on a proxy. */ ?>
         if (component.__bcWire) {
             return;
