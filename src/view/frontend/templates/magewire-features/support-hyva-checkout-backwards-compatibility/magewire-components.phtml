@@ -18,28 +18,28 @@ $magewireFragment = $magewireViewModel->utils()->fragment();
 <?php $script = $magewireFragment->make()->script()->start() ?>
 <script>
     <?php /*
-        Replace a BC-enabled component's `$wire` with a single backwards compatibility proxy.
-        Both wire access paths read this exact object — Alpine's `wire` magic (`this.$wire.*`
-        resolves to `component.$wire[prop]`) and `Magewire.find(id)` (which returns
-        `components[id].$wire`) — so all BC wire concerns live in one proxy without nested
-        re-wrapping. Handled members:
-
-        - `sync`: @deprecated v1 `$wire.sync(name, value)` (set + immediate commit) has no v3
-          equivalent and isn't covered by the proxy aliases, so it would fall through to a
-          `callMethod: sync` request and fail with "Method not found: sync". Map it onto the native
-          `$set` (which defaults `live = true`) — the same safe live commit path as
-          `wire:model.live`. Migrate to `$wire.$set(name, value)` in v3-native code.
-        - `__instance`: return a backwards-compatible component proxy instead of the raw component.
-    */ ?>
+     * Replace a BC-enabled component's `$wire` with a single backwards compatibility proxy.
+     * Both wire access paths read this exact object — Alpine's `wire` magic (`this.$wire.*`
+     * resolves to `component.$wire[prop]`) and `Magewire.find(id)` (which returns
+     * `components[id].$wire`) — so all BC wire concerns live in one proxy without nested
+     * re-wrapping. Handled members:
+     *
+     * - `sync`: @deprecated v1 `$wire.sync(name, value)` (set + immediate commit) has no v3
+     * equivalent and isn't covered by the proxy aliases, so it would fall through to a
+     * `callMethod: sync` request and fail with "Method not found: sync". Map it onto the native
+     * `$set` (which defaults `live = true`) — the same safe live commit path as
+     * `wire:model.live`. Migrate to `$wire.$set(name, value)` in v3-native code.
+     * - `__instance`: return a backwards-compatible component proxy instead of the raw component.
+     */ ?>
     Magewire.hook('component.init', ({ component }) => {
         <?php /*
-            Not gated on memo.bc.enabled: `sync` and `__instance` are universally safe ($set and a
-            pass-through component proxy), and `__instance` was ungated in the original Magewire.find
-            override this replaces. Gating here also misses components whose bc flag isn't resolved in
-            a given render context (e.g. an address form re-rendered via a subsequent Magewire request),
-            which is exactly when $wire.sync() would silently fall through to a "Method not found".
-            This template only loads on checkout, so the wrap stays scoped to checkout components.
-        */ ?>
+         * Not gated on memo.bc.enabled: `sync` and `__instance` are universally safe ($set and a
+         * pass-through component proxy), and `__instance` was ungated in the original Magewire.find
+         * override this replaces. Gating here also misses components whose bc flag isn't resolved in
+         * a given render context (e.g. an address form re-rendered via a subsequent Magewire request),
+         * which is exactly when $wire.sync() would silently fall through to a "Method not found".
+         * This template only loads on checkout, so the wrap stays scoped to checkout components.
+         */ ?>
         <?php /* Already wrapped — quick return so we never stack a proxy on a proxy. */ ?>
         if (component.__bcWire) {
             return;
