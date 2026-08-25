@@ -1,0 +1,34 @@
+name: 'Tests'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'composer.json'
+      - '.github/workflows/tests.yml'
+      - '.github/workflows/production-build.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'composer.json'
+      - '.github/workflows/tests.yml'
+      - '.github/workflows/production-build.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  production-build:
+    name: 'Production build'
+    uses: ./.github/workflows/production-build.yml
+    secrets: inherit
