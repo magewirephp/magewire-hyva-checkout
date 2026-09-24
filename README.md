@@ -19,6 +19,8 @@ The module declares a `sequence` after `Magewirephp_Magewire`, `Magewirephp_Mage
 
 Consecutive checkout flash messages with the same text and type share one message with a count badge. The feature wraps Hyvä's message component and leaves its template in place. It is enabled by default. To turn it off, set **Stores → Configuration → Hyvä Checkout → General → Components → Flash Messages → Group Consecutive Messages** to **No**. The setting is available per website and store view.
 
+The badge styles are compiled with the active Hyvä theme. After installing or updating this module, regenerate Hyvä's module config and rebuild the theme's Tailwind CSS. The module provides Tailwind v3 and v4 sources.
+
 ## Installation
 
 ```bash

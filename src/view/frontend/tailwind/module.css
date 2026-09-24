@@ -1,0 +1,4 @@
+@source "../layout/**/*.xml";
+@source "../templates/**/*.phtml";
+
+@import "./components/flash-message-occurrences.css";

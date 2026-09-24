@@ -11,9 +11,6 @@
       layout="1column"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd"
 >
-    <head>
-        <css src="Magewirephp_MagewireHyvaCheckout::css/flash-message-occurrences.css"/>
-    </head>
     <body>
         <referenceContainer name="page.messages">
             <block name="magewire.checkout.flash-message-counter"
