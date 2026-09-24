@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd"
+>
+    <system>
+        <section id="hyva_themes_checkout">
+            <group id="component">
+                <group id="flash_messages"
+                       translate="label"
+                       sortOrder="90"
+                       showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="1"
+                >
+                    <label>Flash Messages</label>
+                    <field id="group_consecutive"
+                           translate="label comment"
+                           type="select"
+                           sortOrder="10"
+                           showInDefault="1"
+                           showInWebsite="1"
+                           showInStore="1"
+                           canRestore="1"
+                    >
+                        <label>Group Consecutive Messages</label>
+                        <comment>Show consecutive checkout flash messages with the same text and type once, with a count badge.</comment>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                </group>
+            </group>
+        </section>
+    </system>
+</config>

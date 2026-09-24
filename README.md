@@ -15,6 +15,10 @@ This is the Hyvä Checkout-specific compatibility layer for [Magewire](https://g
 
 The module declares a `sequence` after `Magewirephp_Magewire`, `Magewirephp_MagewireHyvaTheme`, `Hyva_Theme`, and `Hyva_Checkout`.
 
+## Checkout Flash Messages
+
+Consecutive checkout flash messages with the same text and type share one message with a count badge. The feature wraps Hyvä's message component and leaves its template in place. It is enabled by default. To turn it off, set **Stores → Configuration → Hyvä Checkout → General → Components → Flash Messages → Group Consecutive Messages** to **No**. The setting is available per website and store view.
+
 ## Installation
 
 ```bash

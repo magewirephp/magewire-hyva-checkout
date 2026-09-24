@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+use Hyva\Theme\ViewModel\HyvaCsp;
+
+/** @var HyvaCsp $hyvaCsp */
+?>
+<script>
+    (() => {
+        const originalInitMessages = window.initMessages;
+        if (typeof originalInitMessages !== 'function') return;
+
+        const occurrencesLabel = <?= json_encode(
+            (string) __('Notification occurrences:'),
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT
+        ) ?>;
+
+        const matches = (previous, message) => previous && message &&
+            typeof message.text === 'string' && message.text.trim() !== '' &&
+            previous.type === message.type && previous.text === message.text;
+
+        function groupInitialMessages(component, occurrences) {
+            const grouped = [];
+
+            component.messages.forEach((message) => {
+                const previousIndex = grouped.length - 1;
+                if (matches(grouped[previousIndex], message)) {
+                    occurrences[previousIndex] += 1;
+                } else {
+                    grouped.push(message);
+                    occurrences.push(1);
+                }
+            });
+
+            if (grouped.length !== component.messages.length) {
+                component.messages = grouped;
+            }
+        }
+
+        function createBadge() {
+            const badge = document.createElement('span');
+            badge.className = 'magewire-notifier-occurrences checkout-flash-occurrences';
+
+            const label = document.createElement('span');
+            label.className = 'magewire-sr-only';
+            label.textContent = occurrencesLabel;
+
+            const count = document.createElement('span');
+            count.setAttribute('aria-hidden', 'true');
+            badge.append(label, count);
+
+            return badge;
+        }
+
+        function renderBadges(component, occurrences) {
+            if (typeof component.$nextTick !== 'function') return;
+
+            component.$nextTick(() => {
+                const root = component.$el;
+                if (!root || typeof root.querySelectorAll !== 'function') return;
+
+                const messageElements = Array.from(root.querySelectorAll('.messages .message'))
+                    .filter((element) => !element.parentElement?.closest('.message'));
+                let visibleIndex = 0;
+
+                component.messages.forEach((message, index) => {
+                    if (!message) return;
+
+                    const element = messageElements[visibleIndex++];
+                    if (!element) return;
+
+                    const count = occurrences[index] || 1;
+                    let badge = element.querySelector(':scope > .checkout-flash-occurrences');
+                    element.classList.toggle('checkout-flash-counted', count > 1);
+
+                    if (count < 2) {
+                        badge?.remove();
+                        return;
+                    }
+
+                    if (!badge) {
+                        badge = createBadge();
+                        element.append(badge);
+                    }
+
+                    badge.lastElementChild.textContent = String(count);
+                    badge.classList.toggle('magewire-notifier-occurrences--emphasized', count > 10);
+                });
+            });
+        }
+
+        window.initMessages = new Proxy(originalInitMessages, {
+            apply(factory, thisArg, args) {
+                const component = Reflect.apply(factory, thisArg, args);
+                if (!component || !Array.isArray(component.messages) || typeof component.addMessages !== 'function') {
+                    return component;
+                }
+
+                const originalInit = component.init;
+                const originalAddMessages = component.addMessages;
+                const occurrences = [];
+
+                return new Proxy(component, {
+                    get(target, property, receiver) {
+                        if (property === 'init') {
+                            return function (...initArgs) {
+                                const result = typeof originalInit === 'function'
+                                    ? Reflect.apply(originalInit, this, initArgs)
+                                    : undefined;
+                                if (Array.isArray(this.messages)) {
+                                    occurrences.length = 0;
+                                    groupInitialMessages(this, occurrences);
+                                    renderBadges(this, occurrences);
+                                }
+                                return result;
+                            };
+                        }
+
+                        if (property === 'addMessages') {
+                            return function (messages, hideAfter) {
+                                if (!Array.isArray(messages) || !Array.isArray(this.messages)) {
+                                    return Reflect.apply(originalAddMessages, this, [messages, hideAfter]);
+                                }
+                                if (this.messages.length === 0) occurrences.length = 0;
+
+                                const originalLength = this.messages.length;
+                                const forwarded = [];
+                                let previousIndex = originalLength - 1;
+                                let previous = this.messages[previousIndex];
+                                let appended = 0;
+
+                                messages.forEach((message) => {
+                                    if (!message?.text || typeof message.text !== 'string' || !message.text.trim()) {
+                                        forwarded.push(message);
+                                    } else if (matches(previous, message)) {
+                                        occurrences[previousIndex] = (occurrences[previousIndex] || 1) + 1;
+                                    } else {
+                                        forwarded.push(message);
+                                        previous = message;
+                                        previousIndex = originalLength + appended++;
+                                        occurrences[previousIndex] = 1;
+                                    }
+                                });
+
+                                // Hyvä still handles the surviving batch and its hide timing.
+                                const result = Reflect.apply(originalAddMessages, this, [forwarded, hideAfter]);
+                                renderBadges(this, occurrences);
+                                return result;
+                            };
+                        }
+
+                        return Reflect.get(target, property, receiver);
+                    }
+                });
+            }
+        });
+    })();
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>

@@ -11,7 +11,17 @@
       layout="1column"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd"
 >
+    <head>
+        <css src="Magewirephp_MagewireHyvaCheckout::css/flash-message-occurrences.css"/>
+    </head>
     <body>
+        <referenceContainer name="page.messages">
+            <block name="magewire.checkout.flash-message-counter"
+                   template="Magewirephp_MagewireHyvaCheckout::flash-message-counter.phtml"
+                   after="messages"
+                   ifconfig="hyva_themes_checkout/component/flash_messages/group_consecutive"
+            />
+        </referenceContainer>
         <referenceContainer name="magewire.features">
             <!-- Make Hyvä Checkout backwards compatible. -->
             <container name="magewire.features.support-hyva-checkout-backwards-compatibility">
