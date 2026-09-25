@@ -3,12 +3,12 @@
   "description": "Hyvä Checkout compatibility module for Magewire V3",
   "type": "magento2-module",
   "require": {
-      "magewirephp/magewire": ">=3.2",
-      "magewirephp/magewire-hyva-theme": "*",
-      "hyva-themes/magento2-hyva-checkout": "*"
+    "magewirephp/magewire": ">=3.2",
+    "magewirephp/magewire-hyva-theme": "*",
+    "hyva-themes/magento2-hyva-checkout": "*"
   },
   "support": {
-      "docs": "https://docs.hyva.io/"
+    "docs": "https://docs.hyva.io/"
   },
   "license": "MIT",
   "autoload": {
