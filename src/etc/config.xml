@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd"
+>
+    <default>
+        <hyva_themes_checkout>
+            <component>
+                <flash_messages>
+                    <group_consecutive>1</group_consecutive>
+                </flash_messages>
+            </component>
+        </hyva_themes_checkout>
+    </default>
+</config>

@@ -1,0 +1,35 @@
+/* Match the Magewire notifier badge within checkout's theme messages. */
+#messages .message.checkout-flash-counted {
+    position: relative;
+}
+
+#messages .message .checkout-flash-occurrences {
+    @apply absolute flex items-center justify-center rounded-md bg-gray-500 text-xs font-semibold tabular-nums text-black shadow-md whitespace-nowrap;
+
+    inset-block-start: -0.5rem;
+    inset-inline-end: -0.5rem;
+    box-sizing: border-box;
+    block-size: 1.25rem;
+    max-inline-size: fit-content;
+    min-inline-size: 1.75rem;
+    padding: 0 0.375rem;
+    border: 0;
+    line-height: 1;
+    text-align: center;
+}
+
+#messages .message.success .checkout-flash-occurrences {
+    @apply bg-green-50;
+}
+
+#messages .message:is(.info, .notice) .checkout-flash-occurrences {
+    @apply bg-blue-50;
+}
+
+#messages .message.warning .checkout-flash-occurrences {
+    @apply bg-yellow-50;
+}
+
+#messages .message.error .checkout-flash-occurrences {
+    @apply bg-red-50;
+}
