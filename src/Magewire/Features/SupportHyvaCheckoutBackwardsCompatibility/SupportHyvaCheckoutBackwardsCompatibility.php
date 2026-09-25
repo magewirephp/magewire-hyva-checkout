@@ -15,8 +15,10 @@ use Hyva\Checkout\Magewire\Checkout\AddressView\AbstractMagewireAddressForm;
 use Magewirephp\Magewire\Component;
 use Magewirephp\Magewire\ComponentHook;
 use Magewirephp\Magewire\Features\SupportEvents\SupportEvents;
+use Magewirephp\Magewire\Features\SupportMagewireBackwardsCompatibility\HandleBackwardsCompatibility;
 use Magewirephp\Magewire\Mechanisms\HandleComponents\ComponentContext;
 use Magewirephp\Magewire\Mechanisms\ResolveComponents\Management\LayoutLifecycleManager;
+use Magewirephp\Magewire\Support\AttributesReader;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
 
@@ -49,6 +51,8 @@ use function Magewirephp\Magewire\store;
  */
 class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
 {
+    private bool $hydrated = false;
+
     public function __construct(
         private readonly LayoutLifecycleManager $renderLifecycleManager,
         private readonly LoggerInterface $logger,
@@ -93,6 +97,7 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
     public function hydrate($memo): void
     {
         store($this->component())->set('magewire:bc', $memo['bc']['enabled'] ?? false);
+        $this->hydrated = true;
     }
 
     public function dehydrate(ComponentContext $context): void
@@ -108,18 +113,21 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
         }
 
         try {
-            $backwardsCompatibilityActive = $this->component() ? store($this->component())->get('magewire:bc', null) : null;
+            $component = $this->component();
+            $backwardsCompatibilityActive = $component ? store($component)->get('magewire:bc', false) : false;
+            $attribute = $component ? AttributesReader::for($component)->first(HandleBackwardsCompatibility::class) : null;
 
-            // When still null, a Magewire component is dynamically injected onto the page via a subsequent
-            // Magewire request, it can not match any of the above use cases. Herefor, a unique
-            // situation occurs needing to search within the lifecycle to try and figure out if
-            // any of the requested components, rendered this child component.
-            if ($backwardsCompatibilityActive === null) {
-                // When still null, lets check if this component sits within the Hyvä Checkout Main component.
+            if ($attribute instanceof HandleBackwardsCompatibility) {
+                // An explicit class-level opt-in or opt-out always wins over the layout fallback.
+                $backwardsCompatibilityActive = $attribute->isBackwardsCompatible();
+            }
+
+            if (! $attribute instanceof HandleBackwardsCompatibility && ! $this->hydrated) {
+                // Newly mounted components without an attribute inherit the checkout container default.
                 $backwardsCompatibilityActive = $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
             }
 
-            store($this->component())->set('magewire:bc', is_bool($backwardsCompatibilityActive) ? $backwardsCompatibilityActive : false);
+            store($component)->set('magewire:bc', is_bool($backwardsCompatibilityActive) ? $backwardsCompatibilityActive : false);
         } catch (ReflectionException $exception) {
             $this->logger->critical($exception->getMessage(), ['exception' => $exception]);
         }
