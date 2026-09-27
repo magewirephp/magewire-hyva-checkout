@@ -8,7 +8,7 @@ This is the Hyvä Checkout-specific compatibility layer for [Magewire](https://g
 
 ## Requirements
 
-- `magewirephp/magewire` `>=3.2`
+- `magewirephp/magewire` `>=3.7`
 - `magewirephp/magewire-hyva-theme`
 - `Hyva_Theme`
 - `Hyva_Checkout`
