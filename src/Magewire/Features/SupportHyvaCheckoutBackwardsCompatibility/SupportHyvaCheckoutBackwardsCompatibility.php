@@ -128,8 +128,7 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
                 // without discarding an opt-in already made by their resolver (e.g. the Hyvä Checkout
                 // component resolver). Components mounted during a subsequent update request render
                 // outside 'hyva-checkout-main' and would otherwise silently lose backwards compatibility.
-                $backwardsCompatibilityActive = $backwardsCompatibilityActive === true
-                    || $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
+                $backwardsCompatibilityActive = $backwardsCompatibilityActive === true || $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
             }
 
             store($component)->set('magewire:bc', is_bool($backwardsCompatibilityActive) ? $backwardsCompatibilityActive : false);
