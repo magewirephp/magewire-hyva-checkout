@@ -41,7 +41,8 @@ use function Magewirephp\Magewire\store;
  *
  *   1. The #[HandleBackwardsCompatibility] attribute on the component class
  *   2. A previously hydrated value from the component's data store
- *   3. Whether the component lives inside the 'hyva-checkout-main' layout container
+ *   3. For newly mounted components: an opt-in set by the component resolver, or else whether
+ *      the component lives inside the 'hyva-checkout-main' layout container
  *
  * The frontend JS (in magewire-attributes.phtml and magewire-components.phtml) reads this
  * flag to automatically migrate wire:model directives and make entangle default to live,
@@ -123,8 +124,12 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
             }
 
             if (! $attribute instanceof HandleBackwardsCompatibility && ! $this->hydrated) {
-                // Newly mounted components without an attribute inherit the checkout container default.
-                $backwardsCompatibilityActive = $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
+                // Newly mounted components without an attribute inherit the checkout container default,
+                // without discarding an opt-in already made by their resolver (e.g. the Hyvä Checkout
+                // component resolver). Components mounted during a subsequent update request render
+                // outside 'hyva-checkout-main' and would otherwise silently lose backwards compatibility.
+                $backwardsCompatibilityActive = $backwardsCompatibilityActive === true
+                    || $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
             }
 
             store($component)->set('magewire:bc', is_bool($backwardsCompatibilityActive) ? $backwardsCompatibilityActive : false);
