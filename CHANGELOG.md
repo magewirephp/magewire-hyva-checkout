@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.1.1](https://github.com/magewirephp/magewire-hyva-checkout/compare/3.1.0...3.1.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **bc:** keep resolver opt-in for newly mounted components ([6d378c5](https://github.com/magewirephp/magewire-hyva-checkout/commit/6d378c5e29e58664ebcc3300a92cab6f552eeb5e))
+* **bc:** keep resolver opt-in for newly mounted components ([0483e16](https://github.com/magewirephp/magewire-hyva-checkout/commit/0483e1635065d2fb1be63521aef15f0ce14757eb))
+
 ## [3.1.0](https://github.com/magewirephp/magewire-hyva-checkout/compare/3.0.0...3.1.0) (2026-09-27)
 
 
