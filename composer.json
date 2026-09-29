@@ -3,7 +3,7 @@
   "description": "Hyvä Checkout compatibility module for Magewire V3",
   "type": "magento2-module",
   "require": {
-    "magewirephp/magewire": ">=3.7",
+    "magewirephp/magewire": "~3.7.1",
     "magewirephp/magewire-hyva-theme": "*",
     "hyva-themes/magento2-hyva-checkout": "*"
   },
