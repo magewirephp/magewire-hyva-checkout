@@ -14,15 +14,14 @@ namespace Magewirephp\MagewireHyvaCheckout\Magewire\Features\SupportHyvaCheckout
 use Hyva\Checkout\Magewire\Checkout\AddressView\AbstractMagewireAddressForm;
 use Magewirephp\Magewire\Component;
 use Magewirephp\Magewire\ComponentHook;
+use Magewirephp\Magewire\Features\SupportEvents\Event;
 use Magewirephp\Magewire\Features\SupportEvents\SupportEvents;
-use Magewirephp\Magewire\Features\SupportMagewireBackwardsCompatibility\HandleBackwardsCompatibility;
 use Magewirephp\Magewire\Mechanisms\HandleComponents\ComponentContext;
-use Magewirephp\Magewire\Mechanisms\ResolveComponents\Management\LayoutLifecycleManager;
-use Magewirephp\Magewire\Support\AttributesReader;
 use Psr\Log\LoggerInterface;
 use ReflectionException;
 
 use function Magewirephp\Magewire\after;
+use function Magewirephp\Magewire\before;
 use function Magewirephp\Magewire\store;
 
 /**
@@ -47,15 +46,11 @@ use function Magewirephp\Magewire\store;
  * The frontend JS (in magewire-attributes.phtml and magewire-components.phtml) reads this
  * flag to automatically migrate wire:model directives and make entangle default to live,
  * so existing Hyvä Checkout components work without code changes.
- *
- * @mago-expect lint:cyclomatic-complexity
  */
 class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
 {
-    private bool $hydrated = false;
-
     public function __construct(
-        private readonly LayoutLifecycleManager $renderLifecycleManager,
+        private readonly BackwardsCompatibility $backwardsCompatibility,
         private readonly LoggerInterface $logger,
         private readonly SupportEvents $supportEvents
     ) {
@@ -63,6 +58,11 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
 
     public function provide()
     {
+        // Component boot()/hydrate() hooks may emit before this feature's hydrate() runs.
+        before('hydrate', function (Component $component, array $memo): void {
+            $this->backwardsCompatibility->hydrate($component, $memo);
+        });
+
         after('dehydrate', function (Component $component, ComponentContext $context) {
             if ($context->isMounting() || ! $component instanceof AbstractMagewireAddressForm) {
                 return;
@@ -97,8 +97,7 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
 
     public function hydrate($memo): void
     {
-        store($this->component())->set('magewire:bc', $memo['bc']['enabled'] ?? false);
-        $this->hydrated = true;
+        $this->backwardsCompatibility->hydrate($this->component(), $memo);
     }
 
     public function dehydrate(ComponentContext $context): void
@@ -115,23 +114,7 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
 
         try {
             $component = $this->component();
-            $backwardsCompatibilityActive = $component ? store($component)->get('magewire:bc', false) : false;
-            $attribute = $component ? AttributesReader::for($component)->first(HandleBackwardsCompatibility::class) : null;
-
-            if ($attribute instanceof HandleBackwardsCompatibility) {
-                // An explicit class-level opt-in or opt-out always wins over the layout fallback.
-                $backwardsCompatibilityActive = $attribute->isBackwardsCompatible();
-            }
-
-            if (! $attribute instanceof HandleBackwardsCompatibility && ! $this->hydrated) {
-                // Newly mounted components without an attribute inherit the checkout container default,
-                // without discarding an opt-in already made by their resolver (e.g. the Hyvä Checkout
-                // component resolver). Components mounted during a subsequent update request render
-                // outside 'hyva-checkout-main' and would otherwise silently lose backwards compatibility.
-                $backwardsCompatibilityActive = $backwardsCompatibilityActive === true || $this->renderLifecycleManager->forMagewire()->within('hyva-checkout-main');
-            }
-
-            store($component)->set('magewire:bc', is_bool($backwardsCompatibilityActive) ? $backwardsCompatibilityActive : false);
+            store($component)->set('magewire:bc', $this->backwardsCompatibility->isEnabled($component));
         } catch (ReflectionException $exception) {
             $this->logger->critical($exception->getMessage(), ['exception' => $exception]);
         }
@@ -139,5 +122,11 @@ class SupportHyvaCheckoutBackwardsCompatibility extends ComponentHook
         $backwardsCompatibilityActive = $this->component() ? store($this->component())->get('magewire:bc') : false;
 
         $context->pushMemo('bc', $backwardsCompatibilityActive ?? false, 'enabled');
+
+        $ancestorEvents = store($this->component())->get('hyvaCheckout:ancestorEvents', []);
+
+        if ($ancestorEvents !== []) {
+            $context->addEffect('hyvaCheckoutAncestorEvents', array_map(static fn (Event $event) => $event->serialize(), $ancestorEvents));
+        }
     }
 }

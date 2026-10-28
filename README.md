@@ -15,6 +15,20 @@ This is the Hyvä Checkout-specific compatibility layer for [Magewire](https://g
 
 The module declares a `sequence` after `Magewirephp_Magewire`, `Magewirephp_MagewireHyvaTheme`, `Hyva_Theme`, and `Hyva_Checkout`.
 
+## Legacy PHP events
+
+For components with backwards compatibility enabled, this module adapts deprecated `emit*()` calls to Magewire v3:
+
+- Multiple arguments such as `emit('pair', 'left', 'right')` reach the listener separately. A single array keeps Magewire v3's parameter-map behavior, and an explicit `null` remains one argument.
+- `emitUp()` delivers only to DOM ancestors, excluding the emitting component, siblings, and unrelated components.
+- `emitToRefreshUp()` commits each ancestor so it re-renders without requiring a `$refresh` listener.
+
+These adapters use Magento plugins and a Checkout-specific effect. They work with Magewire's existing method signatures and do not require the core changes proposed in magewirephp/magewire#337 or #341. Native `dispatch()` retains its v3 behavior.
+
+The same compatibility flag controls PHP event adapters and the snapshot memo: class-level `#[HandleBackwardsCompatibility]` attributes take priority, followed by the hydrated flag or, on mount, a resolver opt-in and the `hyva-checkout-main` container default. `#[HandleBackwardsCompatibility(enabled: false)]` opts a component out, including when Magento generates an interceptor for it.
+
+Ancestor delivery is loaded by the `hyva_checkout_index_index` layout handle. When opting components in on another page, include the `magewire-ancestor-events.phtml` template there too.
+
 ## Checkout Flash Messages
 
 Consecutive checkout flash messages with the same text and type share one message with a count badge. The feature wraps Hyvä's message component and leaves its template in place. It is enabled by default. To turn it off, set **Stores → Configuration → Hyvä Checkout → General → Components → Flash Messages → Group Consecutive Messages** to **No**. The setting is available per website and store view.

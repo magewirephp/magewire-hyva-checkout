@@ -1,0 +1,43 @@
+name: Legacy event compatibility
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: Magewire ${{ matrix.magewire }} / PHP 8.2
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        magewire: ['3.7.1', 'main']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          repository: magewirephp/magewire
+          ref: ${{ matrix.magewire }}
+          path: .magewire-test-framework
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: bcmath, ctype, curl, dom, gd, intl, mbstring, simplexml, soap, sockets, xsl, zip
+          tools: composer:v2, phpunit:11.5.56
+      - name: Install public framework dependencies
+        working-directory: .magewire-test-framework
+        run: |
+          composer config repositories.magento composer https://mirror.mage-os.org/
+          composer install --no-dev --no-scripts --prefer-dist --no-interaction
+      - name: Test through Magento interceptors
+        env:
+          MAGEWIRE_AUTOLOAD: ${{ github.workspace }}/.magewire-test-framework/vendor/autoload.php
+        run: phpunit --bootstrap tests/bootstrap.php --do-not-cache-result tests/Unit
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Test ancestor event delivery
+        run: node --test tests/JavaScript/*.test.js

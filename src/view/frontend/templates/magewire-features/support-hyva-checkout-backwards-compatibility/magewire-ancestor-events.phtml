@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\View\Element\Template;
+use Magewirephp\Magewire\ViewModel\Magewire as MagewireViewModel;
+
+/** @var Template $block */
+/** @var MagewireViewModel $magewireViewModel */
+
+$magewireViewModel = $block->getData('view_model');
+$magewireFragment = $magewireViewModel->utils()->fragment();
+?>
+<?php $script = $magewireFragment->make()->script()->start() ?>
+<script>
+    Magewire.hook('effect', ({ component, effects }) => {
+        (effects.hyvaCheckoutAncestorEvents || []).forEach(({ name, params = {}, self = false, to }) => {
+            if (self) {
+                component.$wire.$dispatchSelf(name, params);
+                return;
+            }
+
+            if (to) {
+                Magewire.dispatchTo(to, name, params);
+                return;
+            }
+
+            <?php /* Walking the DOM avoids component.parent throwing at the root component. */ ?>
+            for (let element = component.el.parentElement; element; element = element.parentElement) {
+                const id = element.getAttribute('wire:id');
+                const wire = id ? Magewire.find(id) : null;
+
+                if (! wire) {
+                    continue;
+                }
+
+                if (name === '$refresh') {
+                    wire.$commit();
+                } else {
+                    <?php /* Non-bubbling delivery keeps the event away from siblings and window listeners. */ ?>
+                    wire.$dispatchSelf(name, params);
+                }
+            }
+        });
+    });
+</script>
+<?php $script->end() ?>

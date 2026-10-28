@@ -22,6 +22,9 @@
         <referenceContainer name="magewire.features">
             <!-- Make Hyvä Checkout backwards compatible. -->
             <container name="magewire.features.support-hyva-checkout-backwards-compatibility">
+                <block name="magewire.features.support-hyva-checkout-backwards-compatibility.magewire-ancestor-events"
+                       template="Magewirephp_MagewireHyvaCheckout::magewire-features/support-hyva-checkout-backwards-compatibility/magewire-ancestor-events.phtml"
+                />
                 <block name="magewire.features.support-hyva-checkout-backwards-compatibility.magewire-components"
                        template="Magewirephp_MagewireHyvaCheckout::magewire-features/support-hyva-checkout-backwards-compatibility/magewire-components.phtml"
                 />
